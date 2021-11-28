@@ -1,6 +1,5 @@
 #include <vector>
 #include <iostream>
-#include <fstream>
 #include <functional>
 #include <random>
 
@@ -8,6 +7,10 @@ struct backpack_problem {
     double capacity{};
     std::vector<double> sizes;
     std::vector<double> values;
+
+    int size(){
+        return values.size();
+    }
 };
 
 std::function<double(std::vector<bool>)> reward_function_factory(const backpack_problem &problem) {
@@ -23,46 +26,6 @@ std::function<double(std::vector<bool>)> reward_function_factory(const backpack_
         if (sum_size > problem.capacity)return problem.capacity - sum_size;
         return sum_value;
     };
-}
-
-void log_solution(std::ostream &out, std::vector<bool> solution, backpack_problem problem) {
-    std::function<double(std::vector<bool>)> goal_function = reward_function_factory(problem);
-    double value = goal_function(solution);
-    out << "backpack capacity:" << problem.capacity << "\n";
-    out << "solution value: " << value << ((value < 0) ? " (capacity exceeded)" : "") << "\n";
-    out << "[index]\t"
-           "[taken]\t"
-           "[size]\t"
-           "[value]\n";
-    for (int i = 0; i < problem.values.size(); i++) {
-        out << i << ".\t"
-            << (solution[i] ? "*" : " ") << "\t"
-            << problem.sizes[i] << "\t"
-            << problem.values[i] << "\n";
-    }
-}
-
-std::ostream &operator<<(std::ostream &o, std::pair<std::vector<bool>, backpack_problem> solved) {
-    log_solution(o, solved.first, solved.second);
-    return o;
-}
-
-backpack_problem read_problem(std::istream & i) {
-    backpack_problem out;
-    i >> out.capacity;
-    while (!i.eof()) {
-        double size, value;
-        i >> size >> value;
-        if(size == 0 && value == 0)break;
-        out.sizes.push_back(size);
-        out.values.push_back(value);
-    }
-    return out;
-}
-
-std::istream &operator>>(std::istream &i, backpack_problem & problem) {
-    problem = read_problem(i);
-    return i;
 }
 
 std::vector<bool> example_solution(const backpack_problem &problem) {
@@ -87,4 +50,32 @@ bool increment(std::vector<bool> &v) {
         v[index] = !v[index];
     } while (index > 0 && v[index] == 0);
     return !(index == 0 && v[0] == 0);
+}
+
+std::vector<std::vector<bool>> neighbours_linear(std::vector<bool> point) {
+    std::vector<std::vector<bool>> out;
+    for (int i = 0; i < point.size(); i++) {
+        auto p2 = point;
+        p2[i] = !p2[i];
+        out.push_back(p2);
+    }
+    return out;
+}
+
+std::vector<std::vector<bool>> neighbours_square(std::vector<bool> point) {
+    std::vector<std::vector<bool>> out;
+    for (int i = 0; i < point.size(); i++) {
+        auto p2 = point;
+        p2[i] = !p2[i];
+        out.push_back(p2);
+    }
+    for (int i = 0; i < point.size(); i++) {
+        for (int j = i + 1; j < point.size(); j++) {
+            auto p2 = point;
+            p2[i] = !p2[i];
+            p2[j] = !p2[j];
+            out.push_back(p2);
+        }
+    }
+    return out;
 }
